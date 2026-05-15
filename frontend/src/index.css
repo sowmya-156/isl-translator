@@ -1,0 +1,196 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --night-900: #0a0a0f;
+  --night-800: #12121a;
+  --night-700: #1a1a28;
+  --night-600: #242438;
+  --neon-cyan: #00f5ff;
+  --neon-purple: #bf00ff;
+  --neon-green: #00ff88;
+  --neon-yellow: #ffee00;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--night-900);
+  color: #e8e8f0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--night-800); }
+::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 3px; }
+
+/* Neon text effects */
+.neon-text-cyan {
+  color: var(--neon-cyan);
+  text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
+}
+.neon-text-purple {
+  color: var(--neon-purple);
+  text-shadow: 0 0 10px var(--neon-purple);
+}
+.neon-text-green {
+  color: var(--neon-green);
+  text-shadow: 0 0 10px var(--neon-green);
+}
+
+/* Neon border effects */
+.neon-border-cyan {
+  border: 1px solid var(--neon-cyan);
+  box-shadow: 0 0 10px var(--neon-cyan)40, inset 0 0 10px var(--neon-cyan)10;
+}
+.neon-border-purple {
+  border: 1px solid var(--neon-purple);
+  box-shadow: 0 0 10px var(--neon-purple)40, inset 0 0 10px var(--neon-purple)10;
+}
+.neon-border-green {
+  border: 1px solid var(--neon-green);
+  box-shadow: 0 0 10px var(--neon-green)40, inset 0 0 10px var(--neon-green)10;
+}
+
+/* Glass card effect */
+.glass-card {
+  background: rgba(26, 26, 40, 0.8);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Scan line animation */
+.scan-line {
+  position: relative;
+  overflow: hidden;
+}
+.scan-line::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+  animation: scan 3s linear infinite;
+}
+@keyframes scan {
+  0% { top: 0%; }
+  100% { top: 100%; }
+}
+
+/* Webcam overlay grid */
+.cam-grid {
+  background-image:
+    linear-gradient(rgba(0,245,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,245,255,0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Letter display animation */
+@keyframes letterPop {
+  0% { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+  70% { transform: scale(1.1) rotate(2deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.letter-pop {
+  animation: letterPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Pulsing ring */
+@keyframes pulseRing {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0,245,255,0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0,245,255,0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0,245,255,0); }
+}
+.pulse-ring {
+  animation: pulseRing 2s infinite;
+}
+
+/* Gradient backgrounds */
+.bg-grid-pattern {
+  background-color: var(--night-900);
+  background-image: radial-gradient(rgba(0,245,255,0.08) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+/* Nav item active */
+.nav-active {
+  color: var(--neon-cyan);
+  border-bottom: 2px solid var(--neon-cyan);
+}
+
+/* Button styles */
+.btn-neon {
+  background: transparent;
+  border: 1px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  padding: 0.625rem 1.25rem;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.btn-neon:hover {
+  background: var(--neon-cyan);
+  color: var(--night-900);
+  box-shadow: 0 0 20px var(--neon-cyan);
+}
+.btn-neon:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-neon-purple {
+  border-color: var(--neon-purple);
+  color: var(--neon-purple);
+}
+.btn-neon-purple:hover {
+  background: var(--neon-purple);
+  color: white;
+  box-shadow: 0 0 20px var(--neon-purple);
+}
+
+.btn-neon-green {
+  border-color: var(--neon-green);
+  color: var(--neon-green);
+}
+.btn-neon-green:hover {
+  background: var(--neon-green);
+  color: var(--night-900);
+  box-shadow: 0 0 20px var(--neon-green);
+}
+
+/* Confidence bar */
+.confidence-bar {
+  height: 3px;
+  background: linear-gradient(90deg, var(--neon-purple), var(--neon-cyan));
+  transition: width 0.3s ease;
+}
+
+/* Sign display card */
+.sign-card {
+  background: var(--night-700);
+  border: 1px solid rgba(0,245,255,0.2);
+  transition: all 0.3s ease;
+}
+.sign-card:hover {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 15px rgba(0,245,255,0.3);
+  transform: translateY(-2px);
+}
+.sign-card.active {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 20px rgba(0,255,136,0.4);
+}
