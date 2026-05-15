@@ -3,7 +3,7 @@
  * Backend runs at http://localhost:8000
  */
 
-const BASE_URL = 'http://localhost:8000'
+const BASE_URL = 'https://isl-translator-backend-q1k1.onrender.com'
 
 /**
  * Predict gesture from 21 MediaPipe hand landmarks.
