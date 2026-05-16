@@ -265,7 +265,7 @@ def text_to_sign(req: TextToSignRequest):
     text = req.text.upper().strip()
     letters = []
     image_urls = []
-    base_url = "http://localhost:8000/images"
+    base_url = "https://isl-translator-backend-q1k1.onrender.com/images"
 
     for char in text:
         if char.isalpha():
@@ -289,7 +289,7 @@ def get_sign_image_url(letter: str):
     letter = letter.upper()
     if not letter.isalpha() or len(letter) != 1:
         raise HTTPException(400, "Please provide a single letter A-Z")
-    return {"letter": letter, "image_url": f"http://localhost:8000/images/{letter}.png"}
+    return {"letter": letter, "image_url": f"https://isl-translator-backend-q1k1.onrender.com/images/{letter}.png"}
 
 
 @app.get("/available-signs")
