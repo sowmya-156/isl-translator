@@ -9,9 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mediapipe/camera_utils": "latest",
-    "@mediapipe/drawing_utils": "latest",
-    "@mediapipe/hands": "latest",
+    "@mediapipe/camera_utils": "^0.3.1675466862",
+    "@mediapipe/drawing_utils": "^0.3.1675466124",
+    "@mediapipe/hands": "^0.4.1675469240",
     "axios": "^1.7.2",
     "framer-motion": "^11.2.10",
     "react": "^18.3.1",
