@@ -1,53 +1,48 @@
-/**
- * useHandTracking - Custom React hook that integrates MediaPipe Hands
- * with a webcam video element.
- *
- * Usage:
- *   const { videoRef, canvasRef, landmarks, isReady, error } = useHandTracking({ onResult })
- */
-
 import { useEffect, useRef, useState, useCallback } from 'react'
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return }
+    const s = document.createElement('script')
+    s.src = src
+    s.onload = resolve
+    s.onerror = reject
+    document.head.appendChild(s)
+  })
+}
 
 export function useHandTracking({ onResult, enabled = true }) {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
   const handsRef = useRef(null)
-  const cameraRef = useRef(null)
-  const animFrameRef = useRef(null)
+  const timerRef = useRef(null)
+  const streamRef = useRef(null)
 
   const [isReady, setIsReady] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [landmarks, setLandmarks] = useState(null)
-  const [handedness, setHandedness] = useState(null)
+
+  const origAlert = useRef(null)
 
   const drawLandmarks = useCallback((ctx, results) => {
     const canvas = canvasRef.current
     if (!canvas || !ctx) return
-
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-    if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
-      return
-    }
+    if (!results.multiHandLandmarks?.length) return
 
     const lms = results.multiHandLandmarks[0]
-
-    // Connection pairs (MediaPipe hand skeleton)
     const connections = [
-      [0,1],[1,2],[2,3],[3,4],       // Thumb
-      [0,5],[5,6],[6,7],[7,8],       // Index
-      [0,9],[9,10],[10,11],[11,12],  // Middle
-      [0,13],[13,14],[14,15],[15,16],// Ring
-      [0,17],[17,18],[18,19],[19,20],// Pinky
-      [5,9],[9,13],[13,17],          // Palm
+      [0,1],[1,2],[2,3],[3,4],
+      [0,5],[5,6],[6,7],[7,8],
+      [0,9],[9,10],[10,11],[11,12],
+      [0,13],[13,14],[14,15],[15,16],
+      [0,17],[17,18],[18,19],[19,20],
+      [5,9],[9,13],[13,17],
     ]
-
     const W = canvas.width
     const H = canvas.height
 
-    // Draw connections
-    ctx.strokeStyle = 'rgba(0, 245, 255, 0.6)'
+    ctx.strokeStyle = 'rgba(0,245,255,0.8)'
     ctx.lineWidth = 2
     connections.forEach(([a, b]) => {
       ctx.beginPath()
@@ -56,53 +51,52 @@ export function useHandTracking({ onResult, enabled = true }) {
       ctx.stroke()
     })
 
-    // Draw landmark dots
     lms.forEach((lm, i) => {
-      const x = lm.x * W
-      const y = lm.y * H
-      // Finger tips get bigger dots
-      const isTip = [4, 8, 12, 16, 20].includes(i)
+      const isTip = [4,8,12,16,20].includes(i)
       ctx.beginPath()
-      ctx.arc(x, y, isTip ? 6 : 4, 0, 2 * Math.PI)
+      ctx.arc(lm.x * W, lm.y * H, isTip ? 6 : 4, 0, 2 * Math.PI)
       ctx.fillStyle = isTip ? '#00ff88' : '#00f5ff'
-      ctx.shadowColor = isTip ? '#00ff88' : '#00f5ff'
+      ctx.shadowColor = ctx.fillStyle
       ctx.shadowBlur = 8
       ctx.fill()
       ctx.shadowBlur = 0
     })
-
-    // Draw wrist label
-    ctx.fillStyle = 'rgba(0,245,255,0.9)'
-    ctx.font = '12px Space Mono, monospace'
-    const hand = results.multiHandedness?.[0]?.label || ''
-    ctx.fillText(hand, lms[0].x * W + 5, lms[0].y * H - 5)
-
   }, [])
 
   useEffect(() => {
     if (!enabled) return
-
     let active = true
 
-    async function initMediaPipe() {
+    origAlert.current = window.alert
+    window.alert = (msg) => {
+      if (typeof msg === 'string' && msg.toLowerCase().includes('webgl')) return
+      origAlert.current?.(msg)
+    }
+
+    async function init() {
       try {
         setIsLoading(true)
         setError(null)
 
-        // Dynamically import MediaPipe (loaded via CDN script or npm)
-        // We use the @mediapipe/hands npm package
-        const { Hands } = await import('@mediapipe/hands')
-        const { Camera } = await import('@mediapipe/camera_utils')
+        await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js')
+        await loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js')
 
+        let tries = 0
+        while ((!window.Hands || !window.Camera) && tries < 80) {
+          await new Promise(r => setTimeout(r, 100))
+          tries++
+        }
+
+        if (!window.Hands) throw new Error('MediaPipe failed to load')
         if (!active) return
 
-        const hands = new Hands({
+        const hands = new window.Hands({
           locateFile: (file) =>
-            `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
+            `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${file}`,
         })
 
         hands.setOptions({
-          maxNumHands: 1,
+          maxNumHands: 2,
           modelComplexity: 1,
           minDetectionConfidence: 0.7,
           minTrackingConfidence: 0.5,
@@ -110,43 +104,35 @@ export function useHandTracking({ onResult, enabled = true }) {
 
         hands.onResults((results) => {
           if (!active) return
-
           const canvas = canvasRef.current
           if (!canvas) return
           const ctx = canvas.getContext('2d')
-
           drawLandmarks(ctx, results)
 
-          if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-            const lms = results.multiHandLandmarks[0]
-            setLandmarks(lms)
-            setHandedness(results.multiHandedness?.[0]?.label)
-            onResult?.(lms, results.multiHandedness?.[0])
-          } else {
-            setLandmarks(null)
+          if (results.multiHandLandmarks?.length > 0) {
+            const lms1 = results.multiHandLandmarks[0]
+            const lms2 = results.multiHandLandmarks[1] || null
+            onResult?.(lms1, results.multiHandedness?.[0], lms2)
           }
         })
 
         handsRef.current = hands
 
-        // Get webcam stream
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 640, height: 480, facingMode: 'user' },
+          audio: false,
         })
 
-        if (!active) {
-          stream.getTracks().forEach(t => t.stop())
-          return
-        }
+        if (!active) { stream.getTracks().forEach(t => t.stop()); return }
 
+        streamRef.current = stream
         const video = videoRef.current
         if (!video) return
-
         video.srcObject = stream
-        video.play()
+        await new Promise(r => { video.onloadedmetadata = r })
+        await video.play()
 
-        // Use MediaPipe Camera utility for processing
-        const camera = new Camera(video, {
+        const camera = new window.Camera(video, {
           onFrame: async () => {
             if (!active || !handsRef.current) return
             await handsRef.current.send({ image: video })
@@ -155,32 +141,33 @@ export function useHandTracking({ onResult, enabled = true }) {
           height: 480,
         })
 
-        cameraRef.current = camera
         camera.start()
-
         setIsReady(true)
         setIsLoading(false)
+
       } catch (err) {
         if (!active) return
-        console.error('MediaPipe init error:', err)
-        setError(err.message || 'Failed to initialize camera/MediaPipe')
+        if (err.name === 'NotAllowedError') {
+          setError('Camera access denied. Allow camera permission.')
+        } else if (err.name === 'NotFoundError') {
+          setError('No camera found.')
+        } else {
+          setError(err.message || 'Failed to start.')
+        }
         setIsLoading(false)
       }
     }
 
-    initMediaPipe()
+    init()
 
     return () => {
       active = false
-      cameraRef.current?.stop()
-      // Stop webcam tracks
-      if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach(t => t.stop())
-      }
-      handsRef.current?.close()
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
+      clearTimeout(timerRef.current)
+      streamRef.current?.getTracks().forEach(t => t.stop())
+      try { handsRef.current?.close() } catch (_) {}
+      if (origAlert.current) window.alert = origAlert.current
     }
   }, [enabled, drawLandmarks])
 
-  return { videoRef, canvasRef, landmarks, handedness, isReady, isLoading, error }
+  return { videoRef, canvasRef, isReady, isLoading, error }
 }
