@@ -24,7 +24,10 @@ app.add_middleware(
 )
 
 # Serve ISL images as static files
-DATASET_PATH = os.path.join(os.path.dirname(__file__), "../dataset/isl_images")
+DATASET_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../dataset/isl_images")
+print(f"Dataset path: {DATASET_PATH}")
+print(f"Path exists: {os.path.exists(DATASET_PATH)}")
+print(f"Files: {os.listdir(DATASET_PATH) if os.path.exists(DATASET_PATH) else 'NOT FOUND'}")
 if os.path.exists(DATASET_PATH):
     app.mount("/images", StaticFiles(directory=DATASET_PATH), name="images")
 
